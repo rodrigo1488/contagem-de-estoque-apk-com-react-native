@@ -39,6 +39,12 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir acesso à câmera para ler códigos de barras."
+        }
       ]
     ],
     "experiments": {
