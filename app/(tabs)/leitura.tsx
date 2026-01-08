@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Button
+  Button,
+  Linking
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, CameraView, useCameraPermissions } from 'expo-camera'; // Use useCameraPermissions
@@ -190,8 +191,29 @@ export default function LeituraScreen() {
       Alert.alert('Sucesso', 'Item salvo!');
       resetState();
     } catch (error: any) {
-      const msg = error.response?.data?.message || error.message || 'Falha desconhecida';
-      Alert.alert('Erro', `Falha ao salvar: ${msg}`);
+      // Verificar se é erro de licença
+      if (error.isLicenseError) {
+        Alert.alert(
+          error.title || '⚠️ LICENÇA INVÁLIDA',
+          error.message,
+          [
+            {
+              text: 'Entrar em Contato',
+              onPress: () => {
+                const message = encodeURIComponent(`Olá! Preciso de ajuda com minha licença.\n\nErro: ${error.message}`);
+                require('react-native').Linking.openURL(`https://wa.me/5511999999999?text=${message}`);
+              }
+            },
+            {
+              text: 'OK',
+              style: 'cancel'
+            }
+          ]
+        );
+      } else {
+        const msg = error.response?.data?.message || error.message || 'Falha desconhecida';
+        Alert.alert('Erro', `Falha ao salvar: ${msg}`);
+      }
     }
     setLoading(false);
   };

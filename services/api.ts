@@ -142,6 +142,48 @@ const getClient = async () => {
     }
   });
 
+  // Interceptor para tratar erros de licença (403)
+  client.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 403) {
+        const data = error.response.data;
+
+        if (data?.acesso_negado) {
+          let titulo = '⚠️ LICENÇA INVÁLIDA';
+          const mensagem = data.erro;
+
+          // Customizar título baseado no tipo de erro
+          if (mensagem.includes('vencida')) {
+            titulo = '⏰ LICENÇA VENCIDA';
+          } else if (mensagem.includes('suspensa')) {
+            titulo = '🚫 LICENÇA SUSPENSA';
+          } else if (mensagem.includes('Serial não encontrado')) {
+            titulo = '❓ SERIAL NÃO CADASTRADO';
+          } else if (mensagem.includes('acessos')) {
+            titulo = '👥 LIMITE DE ACESSOS EXCEDIDO';
+          } else if (mensagem.includes('serial do sistema')) {
+            titulo = '⚠️ ERRO DE SISTEMA';
+          }
+
+          // Usar Alert do React Native (precisa ser importado onde for usado)
+          // Por enquanto, apenas logamos e rejeitamos
+          console.error('[LICENSE ERROR]', titulo, mensagem);
+
+          // Criar erro customizado com informações da licença
+          const licenseError = new Error(mensagem);
+          (licenseError as any).isLicenseError = true;
+          (licenseError as any).title = titulo;
+          (licenseError as any).originalError = data;
+
+          return Promise.reject(licenseError);
+        }
+      }
+
+      return Promise.reject(error);
+    }
+  );
+
   console.log('[API] Initializing client with baseURL:', baseURL, 'timeout:', timeout);
 
   return { client, settings };
