@@ -128,9 +128,124 @@ function initNavigation() {
       if (targetId === 'itens-coletados') listarItens();
       if (targetId === 'historico') listarHistorico();
       if (targetId === 'coletar') document.getElementById('codigo_barras').focus();
+      if (targetId === 'configuracoes') loadLicenseInfo();
     });
   });
 }
+
+/*****************************
+ * LICENSE INFO
+ *****************************/
+function loadLicenseInfo() {
+  const container = document.getElementById('license-info-container');
+  container.innerHTML = '<div class="license-info-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando informações...</div>';
+
+  fetch('/info-licenca')
+    .then(res => res.json())
+    .then(data => {
+      if (data.erro) {
+        container.innerHTML = `
+          <div class="license-info-row">
+            <span class="license-info-label">Status:</span>
+            <span class="license-info-value license-status-invalid">
+              <i class="fa-solid fa-circle-xmark"></i> Erro
+            </span>
+          </div>
+          <div class="license-info-row">
+            <span class="license-info-label">Mensagem:</span>
+            <span class="license-info-value">${data.erro}</span>
+          </div>
+        `;
+        return;
+      }
+
+      // Determinar classe de status
+      const statusClass = data.status === 'valida' ? 'license-status-valid' : 'license-status-invalid';
+      const statusIcon = data.status === 'valida' ? 'fa-circle-check' : 'fa-circle-xmark';
+      const statusText = data.status === 'valida' ? 'Válida' : 'Inválida';
+
+      // Formatar validade
+      let validadeFormatada = 'Não definida';
+      if (data.validade) {
+        try {
+          const dataObj = new Date(data.validade + 'T00:00:00');
+          validadeFormatada = dataObj.toLocaleDateString('pt-BR');
+
+          // Verificar se está próximo do vencimento (30 dias)
+          const hoje = new Date();
+          const diffTime = dataObj - hoje;
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays > 0 && diffDays <= 30) {
+            validadeFormatada += ` <span class="license-status-warning">(${diffDays} dias)</span>`;
+          }
+        } catch (e) {
+          validadeFormatada = data.validade;
+        }
+      }
+
+      container.innerHTML = `
+        <div class="license-info-row">
+          <span class="license-info-label">Serial:</span>
+          <span class="license-info-value">${data.serial || 'N/A'}</span>
+        </div>
+        <div class="license-info-row">
+          <span class="license-info-label">Status:</span>
+          <span class="license-info-value ${statusClass}">
+            <i class="fa-solid ${statusIcon}"></i> ${statusText}
+          </span>
+        </div>
+        <div class="license-info-row">
+          <span class="license-info-label">Validade:</span>
+          <span class="license-info-value">${validadeFormatada}</span>
+        </div>
+        <div class="license-info-row">
+          <span class="license-info-label">Acessos Permitidos:</span>
+          <span class="license-info-value">${data.numero_acessos || 'Ilimitado'}</span>
+        </div>
+        ${data.mensagem && data.status !== 'valida' ? `
+        <div class="license-info-row">
+          <span class="license-info-label">Mensagem:</span>
+          <span class="license-info-value license-status-invalid">${data.mensagem}</span>
+        </div>
+        ` : ''}
+      `;
+    })
+    .catch(err => {
+      console.error('Erro ao carregar informações de licença:', err);
+      container.innerHTML = `
+        <div class="license-info-row">
+          <span class="license-info-label">Erro:</span>
+          <span class="license-info-value license-status-invalid">Não foi possível carregar as informações</span>
+        </div>
+      `;
+    });
+}
+
+// Botão de revalidar licença
+document.addEventListener('DOMContentLoaded', () => {
+  const btnRevalidar = document.getElementById('btnRevalidarLicenca');
+  if (btnRevalidar) {
+    btnRevalidar.addEventListener('click', () => {
+      btnRevalidar.disabled = true;
+      btnRevalidar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Revalidando...';
+
+      fetch('/admin/revalidar-licenca', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          alert('Licença revalidada com sucesso!');
+          loadLicenseInfo(); // Recarregar informações
+        })
+        .catch(err => {
+          alert('Erro ao revalidar licença: ' + err.message);
+        })
+        .finally(() => {
+          btnRevalidar.disabled = false;
+          btnRevalidar.innerHTML = '<i class="fa-solid fa-rotate"></i> Revalidar Licença';
+        });
+    });
+  }
+});
 
 function listarHistorico() {
   fetch('/listar-historico')

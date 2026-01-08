@@ -52,6 +52,9 @@ app.register_blueprint(Route_dashboard_bp)
 from Routes.route_contagem import Route_contagem_bp
 app.register_blueprint(Route_contagem_bp)
 
+from Routes.route_licenca import Route_licenca_bp
+app.register_blueprint(Route_licenca_bp)
+
 inicializar_banco()
 
 def run_flask():
