@@ -1,0 +1,1 @@
+pyinstaller --onefile --noconsole --icon=icon.ico --add-data "templates;templates" --add-data "static;static" --collect-submodules rotas app.py

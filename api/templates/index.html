@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contagem de Estoque</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                <span>EstoqueClipp</span>
+            </div>
+            <nav class="nav-links">
+                <button class="nav-btn active" data-target="dashboard">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </button>
+                <button class="nav-btn" data-target="coletar">
+                    <i class="fa-solid fa-barcode"></i> Coletar
+                </button>
+                <button class="nav-btn" data-target="itens-coletados">
+                    <i class="fa-solid fa-list-check"></i> Itens Coletados
+                </button>
+                <button class="nav-btn" data-target="historico">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Histórico
+                </button>
+                <button class="nav-btn" data-target="configuracoes">
+                    <i class="fa-solid fa-gear"></i> Configurações
+                </button>
+            </nav>
+            <div class="user-profile">
+                <div class="user-info">
+                    <p class="user-name" id="userNameDisplay">Sem Usuário</p>
+                    <span class="status-indicator"></span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-bar">
+                <h2 id="pageTitle">Dashboard</h2>
+                <div class="actions">
+                    <button class="btn-icon" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="page-section active">
+                <div class="stats-grid">
+                    <div class="card stat-card">
+                        <div class="icon-wrapper color-primary">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Itens Coletados</h3>
+                            <p class="stat-value" id="statTotalBo">0</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-wrapper color-success">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Valor de Divergência</h3>
+                            <p class="stat-value" id="statDivVal">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-wrapper color-warning">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Divergências</h3>
+                            <p class="stat-value" id="statDivergencias">0</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-wrapper color-info">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Finalizadas</h3>
+                            <p class="stat-value" id="statFinalizadas">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Atividade Recente</h3>
+                    <div class="table-responsive">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Qtd</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivityTable">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Coletar Section -->
+            <section id="coletar" class="page-section">
+                <div class="card center-card">
+                    <h3>Coletar Novo Item</h3>
+                    <div class="form-group" style="position: relative;">
+                        <label for="codigo_barras">Código de Barras</label>
+                        <div class="input-group">
+                            <input type="text" id="codigo_barras" placeholder="Escaneie ou digite..." autofocus
+                                autocomplete="off">
+                            <button class="btn btn-primary" onclick="buscarProduto()">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <ul id="autocomplete-list" class="autocomplete-list"></ul>
+                    </div>
+                    <div class="scanner-status">
+                        <i class="fa-solid fa-wifi"></i> Pronto para escanear
+                    </div>
+                </div>
+            </section>
+
+            <!-- Histórico Section -->
+            <section id="historico" class="page-section">
+                <div class="card">
+                    <h3>Contagens Finalizadas</h3>
+                    <div class="table-responsive">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Data Finalização</th>
+                                    <th>Total Itens</th>
+                                    <th>Valor Total</th>
+                                    <th>Divergências</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historicoTableBody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Itens Coletados Section -->
+            <section id="itens-coletados" class="page-section">
+                <div class="toolbar">
+                    <div class="toolbar">
+                        <input type="text" id="descricao" placeholder="Filtrar por nome..." class="search-input">
+                    </div>
+                    <div id="itens-container" class="items-grid">
+                        <!-- Populated via JS -->
+                    </div>
+            </section>
+
+            <!-- Configurações Section -->
+            <section id="configuracoes" class="page-section">
+                <div class="card">
+                    <h3>Configurações de Usuário</h3>
+                    <div class="form-group">
+                        <label for="nome_usuario">Nome do Operador</label>
+                        <input type="text" id="nome_usuario" placeholder="Seu nome">
+                    </div>
+                    <button class="btn btn-primary" id="btnSalvarUsuario">Salvar Preferências</button>
+
+                    <hr class="divider">
+
+                    <h3>Ações do Sistema</h3>
+                    <button class="btn btn-danger full-width" id="finalizar-btn-config">
+                        <i class="fa-solid fa-check-double"></i> Finalizar Contagem e Baixar Histórico
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal (Floating) -->
+    <div id="itemModal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="close-btn" onclick="fecharModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-header">
+                <h3>Detalhes do Produto</h3>
+            </div>
+            <div class="modal-body">
+                <div class="product-info-row">
+                    <span class="label">Descrição:</span>
+                    <span class="value highlight" id="descricaoProduto">-</span>
+                </div>
+                <div class="product-info-row">
+                    <span class="label">Qtd. Sistema:</span>
+                    <span class="value" id="quantidadeSistema">-</span>
+                </div>
+                <div class="product-info-row">
+                    <span class="label">Preço Atual:</span>
+                    <span class="value" id="preco_atual">-</span>
+                </div>
+
+                <hr class="divider">
+
+                <div class="form-group">
+                    <label for="quantidadeContada">Quantidade Contada</label>
+                    <input type="number" id="quantidadeContada" placeholder="Qtd" class="large-input">
+                </div>
+                <div class="form-group">
+                    <label for="preco">Novo Preço</label>
+                    <input type="number" id="preco" placeholder="R$ 0,00" step="0.01" class="large-input">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success full-width" onclick="salvarEstoque()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Resultados de Busca -->
+    <div id="searchModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 700px;">
+            <button class="close-btn" onclick="fecharSearchModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-header">
+                <h3>Produtos Encontrados</h3>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Descrição</th>
+                                <th>Preço</th>
+                                <th>Qtd</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="searchResultsBody">
+                            <!-- Populated JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
