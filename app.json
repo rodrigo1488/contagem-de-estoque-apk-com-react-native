@@ -20,7 +20,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.rodrigo1488.contagemdeestoque"
+      "package": "com.rodrigo1488.contagemdeestoque",
+      "usesCleartextTraffic": true
     },
     "web": {
       "output": "static",
