@@ -12,7 +12,8 @@ import {
   Platform,
   ScrollView,
   Button,
-  Linking
+  Linking,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, CameraView, useCameraPermissions } from 'expo-camera'; // Use useCameraPermissions
@@ -309,13 +310,14 @@ export default function LeituraScreen() {
                   facing="back"
                   onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
                 />
+                <View style={styles.scannerLine} />
                 <View style={styles.overlay}>
                   <Text style={styles.overlayText}>Aponte a câmera para o código</Text>
                 </View>
               </View>
             )}
 
-            {loading && <ActivityIndicator size="large" style={styles.loader} />}
+            {/* Loader removed from here, moved to Modal */}
           </View>
         ) : (
           <ScrollView style={styles.content}>
@@ -368,6 +370,15 @@ export default function LeituraScreen() {
           </ScrollView>
         )}
       </KeyboardAvoidingView>
+
+      <Modal transparent visible={loading} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.modalText}>Processando...</Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -440,11 +451,19 @@ const styles = StyleSheet.create({
 
   // Camera
   cameraContainer: {
-    flex: 1,
+    height: 300, // Fixed height for a "window" feel
     borderRadius: 15,
     overflow: 'hidden',
-    minHeight: 300,
-    backgroundColor: '#000'
+    backgroundColor: '#000',
+    marginTop: 10,
+    justifyContent: 'center' // Center the line
+  },
+  scannerLine: {
+    height: 2,
+    backgroundColor: 'red',
+    width: '80%',
+    alignSelf: 'center',
+    opacity: 0.7
   },
   overlay: {
     position: 'absolute',
@@ -509,5 +528,26 @@ const styles = StyleSheet.create({
   saveButton: { backgroundColor: '#34c759' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 
-  loader: { marginTop: 20 }
+  loader: { marginTop: 20 },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    elevation: 5
+  },
+  modalText: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333'
+  }
 });

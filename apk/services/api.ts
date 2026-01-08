@@ -118,7 +118,7 @@ export interface FinalizeCountResponse {
 
 const getClient = async () => {
   const settings = await getSettings();
-  let baseURL = 'http://localhost:5000'; // Default per doc
+  let baseURL // Updated to specific local IP
   let timeout = 10000; // Default timeout for local
 
   if (settings) {

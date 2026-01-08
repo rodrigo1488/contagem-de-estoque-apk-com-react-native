@@ -129,6 +129,8 @@ function initNavigation() {
       if (targetId === 'historico') listarHistorico();
       if (targetId === 'coletar') document.getElementById('codigo_barras').focus();
       if (targetId === 'configuracoes') loadLicenseInfo();
+      if (targetId === 'clientes') listarClientes();
+      if (targetId === 'itens') listarItens();
     });
   });
 }
@@ -521,7 +523,116 @@ function salvarEstoque() {
     })
     .catch(err => console.error(err));
 }
+/*****************************
+ * LISTAGEM PRODUTOS
+ *****************************/
+/*****************************
+ * LISTAGEM PRODUTOS
+ *****************************/
+function listarProdutos() {
+  fetch('/produtos')
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById('produtosTableBody');
+      if (!tbody) return;
 
+      tbody.innerHTML = '';
+
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#666;">Nenhum produto encontrado.</td></tr>';
+        return;
+      }
+
+      data.forEach(p => {
+        const tr = document.createElement('tr');
+        const preco = p.preco !== undefined ? Number(p.preco) : 0;
+        const safeDesc = (p.descricao || '').replace(/'/g, "\\'");
+
+        tr.innerHTML = `
+          <td><strong>${p.descricao}</strong></td>
+          <td>R$ ${preco.toFixed(2)}</td>
+          <td>${p.quantidade_sist || 0}</td>
+          <td class="actions-cell">
+            <button class="action-btn" title="Editar" onclick="editarProduto(${p.ID_ESTOQUE}, '${safeDesc}', ${preco}, ${p.quantidade_sist || 0})">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="action-btn danger" title="Inativar" onclick="inativarProduto(${p.ID_ESTOQUE})">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(err => console.error('Erro ao listar produtos:', err));
+}
+
+function adicionarProduto() {
+  const descInput = document.getElementById('produtoDescricao');
+  const descricao = descInput.value.trim();
+
+  if (!descricao) return alert("Digite a descrição do produto.");
+
+  const preco = prompt("Preço de Venda (R$):", "0.00");
+  const qtd = prompt("Quantidade Sistema:", "0");
+
+  fetch('/produtos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      descricao: descricao,
+      preco: parseFloat(preco) || 0,
+      quantidade_sist: parseInt(qtd) || 0
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.id) {
+        alert("Produto criado com sucesso!");
+        descInput.value = "";
+        listarProdutos();
+      } else {
+        alert("Erro: " + (data.message || "Desconhecido"));
+      }
+    })
+    .catch(err => console.error(err));
+}
+
+function editarProduto(id, descAtual, precoAtual, qtdAtual) {
+  const novaDesc = prompt("Descrição:", descAtual);
+  if (novaDesc === null) return;
+
+  const novoPreco = prompt("Preço de Venda (R$):", precoAtual);
+  const novaQtd = prompt("Quantidade Sistema:", qtdAtual);
+
+  fetch(`/produtos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      descricao: novaDesc,
+      preco: parseFloat(novoPreco) || 0,
+      quantidade_sist: parseInt(novaQtd) || 0
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      listarProdutos();
+    })
+    .catch(err => console.error(err));
+}
+
+function inativarProduto(id) {
+  if (!confirm("Deseja inativar este produto?")) return;
+
+  fetch(`/produtos/${id}`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      listarProdutos();
+    })
+    .catch(err => console.error(err));
+}
 /*****************************
  * LISTAGEM
  *****************************/
@@ -652,4 +763,126 @@ function finalizarContagemAction() {
 const btnFinalizarConfig = document.getElementById('finalizar-btn-config');
 if (btnFinalizarConfig) {
   btnFinalizarConfig.addEventListener('click', finalizarContagemAction);
+}
+
+/*****************************
+ * LISTAGEM CLIENTES
+ *****************************/
+function listarClientes() {
+  fetch('/clientes')
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById('clientesTableBody');
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#666;">Nenhum cliente encontrado.</td></tr>';
+        return;
+      }
+
+      data.forEach(c => {
+        const tr = document.createElement('tr');
+        const telefone = c.FONE_CELUL ? `(${c.DDD_CELUL || 'XX'}) ${c.FONE_CELUL}` : '-';
+
+        // Escape strings for onclick
+        const safeNome = (c.NOME || '').replace(/'/g, "\\'");
+
+        tr.innerHTML = `
+          <td><strong>${c.NOME}</strong></td>
+          <td>${c.CONTATO || '-'}</td>
+          <td>${telefone}</td>
+          <td>${c.END_BAIRRO || '-'}</td>
+          <td class="actions-cell">
+            <button class="action-btn" title="Editar" onclick="editarCliente(${c.ID_CLIENTE}, '${safeNome}', '${c.CONTATO || ''}', '${c.DDD_CELUL || ''}', '${c.FONE_CELUL || ''}', '${c.END_BAIRRO || ''}')">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="action-btn danger" title="Excluir" onclick="excluirCliente(${c.ID_CLIENTE})">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(err => console.error('Erro ao listar clientes:', err));
+}
+
+function adicionarCliente() {
+  const nomeInput = document.getElementById('clienteNome');
+  const nome = nomeInput.value.trim();
+
+  if (!nome) return alert("Digite o nome do cliente.");
+
+  // Opcionais (simples prompts por enquanto, ideal seria um modal completo)
+  const contato = prompt("Contato (opcional):", "") || "";
+  const ddd = prompt("DDD (opcional):", "") || "";
+  const fone = prompt("Telefone (opcional):", "") || "";
+  const bairro = prompt("Bairro (opcional):", "") || "";
+
+  fetch('/clientes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      NOME: nome,
+      CONTATO: contato,
+      DDD_CELUL: ddd,
+      FONE_CELUL: fone,
+      END_BAIRRO: bairro
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.id) {
+        alert("Cliente adicionado com sucesso!");
+        nomeInput.value = "";
+        listarClientes();
+      } else {
+        alert("Erro ao adicionar: " + (data.message || "Erro desconhecido"));
+      }
+    })
+    .catch(err => console.error(err));
+}
+
+function editarCliente(id, nomeAtual, contatoAtual, dddAtual, foneAtual, bairroAtual) {
+  const novoNome = prompt("Nome:", nomeAtual);
+  if (novoNome === null) return; // Cancelado
+
+  const novoContato = prompt("Contato:", contatoAtual) || "";
+  const novoDdd = prompt("DDD:", dddAtual) || "";
+  const novoFone = prompt("Telefone:", foneAtual) || "";
+  const novoBairro = prompt("Bairro:", bairroAtual) || "";
+
+  fetch(`/clientes/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      NOME: novoNome,
+      CONTATO: novoContato,
+      DDD_CELUL: novoDdd,
+      FONE_CELUL: novoFone,
+      END_BAIRRO: novoBairro
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      listarClientes();
+    })
+    .catch(err => console.error(err));
+}
+
+function excluirCliente(id) {
+  if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+
+  fetch(`/clientes/${id}`, {
+    method: 'DELETE'
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      listarClientes();
+    })
+    .catch(err => console.error(err));
 }

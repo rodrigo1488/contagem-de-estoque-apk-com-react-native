@@ -9,7 +9,7 @@ Database_bp = Blueprint('Database_bp', __name__)
 
 # Configuração do Firebird
 DATABASE_CONFIG = {
-    "host": "localhost",  # Ou IP do servidor Firebird
+    "host": "192.168.2.33",  # Ou IP do servidor Firebird
     "database": r"C:\Program Files (x86)\CompuFour\Clipp\Base\CLIPP.FDB",
     "user": "SYSDBA",
     "password": "masterkey",
@@ -25,9 +25,8 @@ if not os.path.exists(diretorio):
 
 CAMINHO_ARQUIVO = os.path.join(diretorio, f"contagem_estoque_{datetime.datetime.now().strftime("%d-%m-%Y %H:%M")}.txt")
 
-
-# Caminho do banco local
-CAMINHO_DB_LOCAL = "contagem_estoque.db"
+# Caminho do banco local - DEVE SER EM DIRETÓRIO LOCAL GRAVÁVEL
+CAMINHO_DB_LOCAL = os.path.join(diretorio, "contagem_estoque.db")
 
 
 # Criar banco e tabela, se não existirem
@@ -69,6 +68,20 @@ def inicializar_banco():
             preco REAL,
             FOREIGN KEY(id_contagem) REFERENCES historico_contagens(id)
         );
+        CREATE TABLE IF NOT EXISTS sessao(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            SESSION_ID TEXT NOT NULL UNIQUE,
+            socket_id TEXT,
+            nome_user TEXT,
+            data_hora TIMESTAMP NOT NULL,
+            atualizado TIMESTAMP NOT NULL,
+            validade TIMESTAMP NOT NULL,
+            end_ip TEXT,
+            user_agent TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_sessao_data_hora ON sessao(data_hora);
+        CREATE INDEX IF NOT EXISTS idx_sessao_atualizado ON sessao(atualizado);
+        CREATE INDEX IF NOT EXISTS idx_sessao_validade ON sessao(validade);
     """)
     conn.commit()
     conn.close()

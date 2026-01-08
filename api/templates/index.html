@@ -33,6 +33,12 @@
                 <button class="nav-btn" data-target="historico">
                     <i class="fa-solid fa-clock-rotate-left"></i> Histórico
                 </button>
+                <!-- <button class="nav-btn" data-target="clientes">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Clientes
+                </button>
+                <button class="nav-btn" data-target="itens">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Produtos
+                </button> -->
                 <button class="nav-btn" data-target="configuracoes">
                     <i class="fa-solid fa-gear"></i> Configurações
                 </button>
@@ -54,6 +60,57 @@
                     <button class="btn-icon" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
                 </div>
             </header>
+
+            <section id="clientes" class="page-section">
+                <div class="card center-card">
+                    <h3>Clientes</h3>
+                    <div class="form-group" style="position: relative;">
+                        <input type="text" id="clienteNome" placeholder="Nome do Cliente">
+                        <button class="btn btn-primary" onclick="adicionarCliente()">Adicionar</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Contato</th>
+                                    <th>Telefone</th>
+                                    <th>Bairro</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientesTableBody">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="itens" class="page-section">
+                <div class="card center-card">
+                    <h3>Itens</h3>
+                    <div class="form-group" style="position: relative;">
+                        <input type="text" id="produtoDescricao" placeholder="Descrição do Produto">
+                        <button class="btn btn-primary" onclick="adicionarProduto()">Adicionar</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th>Preço</th>
+                                    <th>Qtd. Sist.</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="produtosTableBody">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
             <!-- Dashboard Section -->
             <section id="dashboard" class="page-section active">
