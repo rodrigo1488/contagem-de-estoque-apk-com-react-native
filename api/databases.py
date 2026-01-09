@@ -33,6 +33,65 @@ CAMINHO_DB_LOCAL = os.path.join(diretorio, "contagem_estoque.db")
 def inicializar_banco():
     conn = sqlite3.connect(CAMINHO_DB_LOCAL)
     cur = conn.cursor()
+    
+    # Verificar se a tabela sessao existe e precisa de migração
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sessao'")
+    tabela_existe = cur.fetchone()
+    
+    if tabela_existe:
+        # Verificar estrutura da tabela
+        cur.execute("PRAGMA table_info(sessao)")
+        colunas = [col[1] for col in cur.fetchall()]
+        
+        # Se não tem as novas colunas, fazer migração
+        if 'atualizado' not in colunas or 'validade' not in colunas:
+            print("[MIGRAÇÃO] Atualizando estrutura da tabela sessao...")
+            try:
+                from datetime import datetime, timedelta
+                
+                # Criar tabela temporária com nova estrutura
+                cur.execute("""
+                    CREATE TABLE sessao_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        SESSION_ID TEXT NOT NULL UNIQUE,
+                        socket_id TEXT,
+                        nome_user TEXT,
+                        data_hora TIMESTAMP NOT NULL,
+                        atualizado TIMESTAMP NOT NULL,
+                        validade TIMESTAMP NOT NULL,
+                        end_ip TEXT,
+                        user_agent TEXT
+                    )
+                """)
+                
+                # Copiar dados existentes (se houver)
+                now = datetime.now().isoformat()
+                validade = (datetime.now() + timedelta(minutes=30)).isoformat()
+                
+                cur.execute("""
+                    INSERT INTO sessao_new (SESSION_ID, socket_id, nome_user, data_hora, atualizado, validade, end_ip, user_agent)
+                    SELECT SESSION_ID, NULL, nome_user, COALESCE(data_hora, ?), ?, ?, COALESCE(end_ip, ''), COALESCE(user_agent, '')
+                    FROM sessao
+                """, (now, now, validade))
+                
+                # Remover tabela antiga e renomear
+                cur.execute("DROP TABLE sessao")
+                cur.execute("ALTER TABLE sessao_new RENAME TO sessao")
+                
+                # Criar índices
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_sessao_data_hora ON sessao(data_hora)")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_sessao_atualizado ON sessao(atualizado)")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_sessao_validade ON sessao(validade)")
+                
+                conn.commit()
+                print("[MIGRAÇÃO] ✅ Tabela sessao atualizada com sucesso!")
+            except Exception as e:
+                print(f"[MIGRAÇÃO] ❌ Erro na migração: {e}")
+                # Em caso de erro, recriar do zero
+                cur.execute("DROP TABLE IF EXISTS sessao")
+                conn.commit()
+    
+    # Criar todas as tabelas (se não existirem)
     cur.executescript("""
             CREATE TABLE IF NOT EXISTS contagem_estoque (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
